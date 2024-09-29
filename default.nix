@@ -30,24 +30,28 @@
 let
   pname = "ollama";
   # don't forget to invalidate all hashes each update
-  version = "0.1.38";
+  version = "0.3.12";
 
   src = fetchFromGitHub {
     owner = "jmorganca";
     repo = "ollama";
     rev = "v${version}";
-    hash = "sha256-9HHR48gqETYVJgIaDH8s/yHTrDPEmHm80shpDNS+6hY=";
+    hash = "sha256-K1FYXEP0bTZa8M+V4/SxI+Q+LWs2rsAMZ/ETJCaO7P8=";
     fetchSubmodules = true;
   };
-  vendorHash = "sha256-zOQGhNcGNlQppTqZdPfx+y4fUrxH0NOUl38FN8J6ffE=";
+  vendorHash = "sha256-hSxcREAujhvzHVNwnRTfhi0MKI3s8HNavER2VLz6SYk=";
   # ollama's patches of llama.cpp's example server
   # `ollama/llm/generate/gen_common.sh` -> "apply temporary patches until fix is upstream"
   # each update, these patches should be synchronized with the contents of `ollama/llm/patches/`
   llamacppPatches = [
-    (preparePatch "02-clip-log.diff" "sha256-rMWbl3QgrPlhisTeHwD7EnGRJyOhLB4UeS7rqa0tdXM=")
-    (preparePatch "03-load_exception.diff" "sha256-1DfNahFYYxqlx4E4pwMKQpL+XR0bibYnDFGt6dCL4TM=")
-    (preparePatch "04-metal.diff" "sha256-Ne8J9R8NndUosSK0qoMvFfKNwqV5xhhce1nSoYrZo7Y=")
-    (preparePatch "05-clip-fix.diff" "sha256-rCc3xNuJR11OkyiXuau8y46hb+KYk40ZqH1Llq+lqWc=")
+    (preparePatch "0000-cmakelist.patch" "sha256-qIW45Js6WCTqDtC/uLyqKWjm7lgEc8ir12gq3pQJNbk=")
+    (preparePatch "0001-load-progress.patch" "sha256-+KRcYqePmHMTPOmFaltlx87VQcC8Wsx4JbXmUK4mjpk=")
+    (preparePatch "0003-load_exception.patch" "sha256-qL1Pv0Qt5mQ6rclL9qUo4y3GxqaM0SeojYHeS5k8zQE=")
+    (preparePatch "0004-metal.patch" "sha256-XVeedBWp5rd0OUNo6cMO1tJaNlc3wWo0Xzha+GoMfbc=")
+    (preparePatch "0005-default-pretokenizer.patch" "sha256-mxqHnDbiy8yfKFUYryNTj/xay/lx9KDiZAiekFSkxr8=")
+    (preparePatch "0006-embeddings.patch" "sha256-vjMuXHZYZ99ZSIKChcaq5fvci2wmgz10sN7yIfJN96Y=")
+    (preparePatch "0007-clip-unicode.patch" "sha256-LYy4LniBwjBRNs11tYoPwjZNTQY87plr55HxmsX1alc=")
+    (preparePatch "0008-solar-pro.patch" "sha256-VwY6l2BvuT73Hvp1UrH3ALNQZn8ENEZbOhNvEzvkMP8=")
   ];
 
   preparePatch = patch: hash: fetchpatch {
@@ -161,8 +165,10 @@ goBuild ((lib.optionalAttrs enableRocm {
     ./disable-git.patch
     # disable a check that unnecessarily exits compilation during rocm builds
     # since `rocmPath` is in `LD_LIBRARY_PATH`, ollama uses rocm correctly
-    ./disable-lib-check.patch
-  ] ++ llamacppPatches;
+    # ./disable-lib-check.patch
+  ]
+  ++ llamacppPatches
+  ;
   postPatch = ''
     # replace inaccurate version number with actual release version
     substituteInPlace version/version.go --replace-fail 0.0.0 '${version}'
